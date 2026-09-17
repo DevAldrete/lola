@@ -2,13 +2,23 @@ package com.dev.domain;
 
 import java.util.Objects;
 
-public record Package(int id, long priceInCents, int routeId, float weight, Priority priority) {
+public record Package(
+    int id,
+    String waybill,
+    int routeId,
+    float weight,
+    long priceInCents,
+    Priority priority,
+    DeliveryStatus status) {
 
   public Package {
-    Objects.requireNonNull(id, "id must not be null");
-    Objects.requireNonNull(priceInCents, "price must not be null");
-    Objects.requireNonNull(routeId, "routeId must not be null");
+    Objects.requireNonNull(waybill, "waybill must not be null");
     Objects.requireNonNull(priority, "priority must not be null");
+    Objects.requireNonNull(status, "status must not be null");
+
+    if (waybill.isBlank()) {
+      throw new IllegalArgumentException("waybill must not be blank");
+    }
 
     if (weight < 0) {
       throw new IllegalArgumentException("weight must be non negative");
@@ -20,6 +30,10 @@ public record Package(int id, long priceInCents, int routeId, float weight, Prio
   }
 
   public Package withPriority(Priority priority) {
-    return new Package(this.id, this.priceInCents, this.routeId, this.weight, priority);
+    return new Package(id, waybill, routeId, weight, priceInCents, priority, status);
+  }
+
+  public Package withStatus(DeliveryStatus status) {
+    return new Package(id, waybill, routeId, weight, priceInCents, priority, status);
   }
 }

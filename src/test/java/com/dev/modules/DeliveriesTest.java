@@ -126,6 +126,13 @@ class DeliveriesTest {
   }
 
   @Test
+  void filtersPackagesByPriority() {
+    assertEquals(2, Deliveries.filterByPriority(sample(), Priority.ASAP).size());
+    assertEquals(1, Deliveries.filterByPriority(sample(), Priority.HIGH).size());
+    assertTrue(Deliveries.filterByPriority(sample(), Priority.MEDIUM).isEmpty());
+  }
+
+  @Test
   void countsPackagesByPriority() {
     assertEquals(2, Deliveries.countByPriority(sample(), Priority.ASAP));
     assertEquals(1, Deliveries.countByPriority(sample(), Priority.LOW));

@@ -109,6 +109,22 @@ public final class Deliveries {
     return result;
   }
 
+  /** Returns the packages carrying the given priority. */
+  public static List<Package> filterByPriority(List<Package> packages, Priority priority) {
+    Objects.requireNonNull(packages, "packages must not be null");
+    Objects.requireNonNull(priority, "priority must not be null");
+
+    List<Package> result = new ArrayList<>();
+
+    for (Package pkg : packages) {
+      if (pkg.priority() == priority) {
+        result.add(pkg);
+      }
+    }
+
+    return result;
+  }
+
   /** Sums the weight of every package. */
   public static float totalWeight(List<Package> packages) {
     Objects.requireNonNull(packages, "packages must not be null");

@@ -2,9 +2,17 @@ package com.dev.ds;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+/**
+ * A generic binary search tree. Values are kept unique and ordered so that
+ * every left child is smaller and every right child is greater than its parent.
+ *
+ * @param <T> the type of elements held in this tree
+ */
 public class BinaryTree<T extends Comparable<? super T>> {
-  public static enum Order {
+
+  public enum Order {
     PREORDER,
     INORDER,
     POSTORDER
@@ -15,10 +23,8 @@ public class BinaryTree<T extends Comparable<? super T>> {
     Node<E> left;
     Node<E> right;
 
-    public Node(E value) {
+    Node(E value) {
       this.value = value;
-      this.left = null;
-      this.right = null;
     }
   }
 
@@ -26,137 +32,174 @@ public class BinaryTree<T extends Comparable<? super T>> {
   private int size;
 
   public boolean isEmpty() {
-    return root == null || size == 0;
+    return size == 0;
   }
 
   public int size() {
     return size;
   }
 
+  /** Inserts a value, ignoring values already present in the tree. */
   public void push(T value) {
+    Objects.requireNonNull(value, "value must not be null");
+
     if (isEmpty()) {
+      root = new Node<>(value);
       size++;
-      root = new Node<T>(value);
+      return;
     }
 
-    Node<T> curr = root;
-    int cmp = 0;
+    Node<T> current = root;
 
-    while (curr != null) {
-      cmp = curr.value.compareTo(value);
+    while (true) {
+      int cmp = value.compareTo(current.value);
+
       if (cmp < 0) {
-        if (curr.left == null) {
-          curr.left = new Node<T>(value);
+        if (current.left == null) {
+          current.left = new Node<>(value);
           size++;
-          break;
+          return;
         }
-        curr = curr.left;
+        current = current.left;
       } else if (cmp > 0) {
-        if (curr.right == null) {
-          curr.right = new Node<T>(value);
+        if (current.right == null) {
+          current.right = new Node<>(value);
           size++;
-          break;
+          return;
         }
-        curr = curr.right;
+        current = current.right;
       } else {
         return;
       }
     }
   }
 
-  private List<T> preOrder() {
-    // TODO implement pre order walk
-    return null;
-  }
+  /** Returns true if the value is present in the tree. */
+  public boolean contains(T value) {
+    Objects.requireNonNull(value, "value must not be null");
 
-  private List<T> inOrder() {
-    // TODO implement in order walk
-    return null;
-  }
+    Node<T> current = root;
 
-  private List<T> postOrder() {
-    // TODO implement post order walk
-    return null;
-  }
+    while (current != null) {
+      int cmp = value.compareTo(current.value);
 
-  public List<T> asList(Order order) {
-    List<T> result = new ArrayList<T>();
-
-    switch (order) {
-      case PREORDER:
-        // TODO Implement preorder walk
-        break;
-      case INORDER:
-        // TODO Implement inorder walk
-        break;
-      case POSTORDER:
-        // TODO Implement postorder walk
-        break;
-    }
-
-    return result;
-  }
-
-  private void rshift(Node<T> node) {
-    Node<T> curr = node;
-    Node<T> right = curr.right;
-    Node<T> left = curr.left;
-
-    if (right == null) {
-      while (curr != null) {
-        curr = curr.left;
-      }
-      size--;
-      return;
-    }
-
-    Node<T> tmp = null;
-
-    while (curr != null) {
-      tmp = right.left;
-      right.left = left;
-      left = tmp;
-      curr = right;
-      right = curr.right;
-    }
-
-    size--;
-  }
-
-  public T pop() {
-    if (isEmpty())
-      return null;
-
-    T val = root.value;
-
-    rshift(root);
-
-    return val;
-  }
-
-  public boolean delete(T value) {
-    if (isEmpty())
-      return false;
-
-    Node<T> curr = root;
-    int cmp = curr.value.compareTo(value);
-
-    if (cmp == 0) {
-      pop();
-    }
-
-    while (curr != null) {
-      cmp = curr.value.compareTo(value);
       if (cmp < 0) {
-        curr = curr.left;
+        current = current.left;
       } else if (cmp > 0) {
-        curr = curr.right;
+        current = current.right;
       } else {
-        rshift(curr);
         return true;
       }
     }
 
     return false;
+  }
+
+  /** Removes and returns the value at the root, or null when the tree is empty. */
+  public T pop() {
+    if (isEmpty()) {
+      return null;
+    }
+
+    T value = root.value;
+    root = remove(root, value);
+    size--;
+
+    return value;
+  }
+
+  /** Removes the given value, returning false when it is not present. */
+  public boolean delete(T value) {
+    Objects.requireNonNull(value, "value must not be null");
+
+    if (!contains(value)) {
+      return false;
+    }
+
+    root = remove(root, value);
+    size--;
+
+    return true;
+  }
+
+  private Node<T> remove(Node<T> node, T value) {
+    if (node == null) {
+      return null;
+    }
+
+    int cmp = value.compareTo(node.value);
+
+    if (cmp < 0) {
+      node.left = remove(node.left, value);
+    } else if (cmp > 0) {
+      node.right = remove(node.right, value);
+    } else {
+      if (node.left == null) {
+        return node.right;
+      }
+      if (node.right == null) {
+        return node.left;
+      }
+
+      // Two children: promote the in-order successor, then drop it from below.
+      Node<T> successor = min(node.right);
+      node.value = successor.value;
+      node.right = remove(node.right, successor.value);
+    }
+
+    return node;
+  }
+
+  private Node<T> min(Node<T> node) {
+    Node<T> current = node;
+    while (current.left != null) {
+      current = current.left;
+    }
+    return current;
+  }
+
+  /** Returns the values in the requested traversal order. */
+  public List<T> asList(Order order) {
+    Objects.requireNonNull(order, "order must not be null");
+
+    List<T> result = new ArrayList<>(size);
+
+    switch (order) {
+      case PREORDER -> preOrder(root, result);
+      case INORDER -> inOrder(root, result);
+      case POSTORDER -> postOrder(root, result);
+    }
+
+    return result;
+  }
+
+  private void preOrder(Node<T> node, List<T> result) {
+    if (node == null) {
+      return;
+    }
+
+    result.add(node.value);
+    preOrder(node.left, result);
+    preOrder(node.right, result);
+  }
+
+  private void inOrder(Node<T> node, List<T> result) {
+    if (node == null) {
+      return;
+    }
+
+    inOrder(node.left, result);
+    result.add(node.value);
+    inOrder(node.right, result);
+  }
+
+  private void postOrder(Node<T> node, List<T> result) {
+    if (node == null) {
+      return;
+    }
+
+    postOrder(node.left, result);
+    postOrder(node.right, result);
+    result.add(node.value);
   }
 }

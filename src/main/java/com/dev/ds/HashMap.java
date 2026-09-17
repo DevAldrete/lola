@@ -1,5 +1,8 @@
 package com.dev.ds;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HashMap<K, V> {
 
   private static class Node<K, V> {
@@ -101,6 +104,30 @@ public class HashMap<K, V> {
     }
 
     return false;
+  }
+
+  public List<K> keys() {
+    List<K> result = new ArrayList<>(size);
+
+    for (Node<K, V> head : bucket) {
+      for (Node<K, V> current = head; current != null; current = current.next) {
+        result.add(current.key);
+      }
+    }
+
+    return result;
+  }
+
+  public List<V> values() {
+    List<V> result = new ArrayList<>(size);
+
+    for (Node<K, V> head : bucket) {
+      for (Node<K, V> current = head; current != null; current = current.next) {
+        result.add(current.value);
+      }
+    }
+
+    return result;
   }
 
   public V remove(K key) {

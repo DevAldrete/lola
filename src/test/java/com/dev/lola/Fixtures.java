@@ -1,8 +1,12 @@
 package com.dev.lola;
 
+import java.time.Duration;
+
 import com.dev.domain.DeliveryStatus;
 import com.dev.domain.Package;
 import com.dev.domain.Priority;
+import com.dev.domain.Route;
+import com.dev.domain.Zone;
 
 /** Shared factories for building test data without repeating constructor noise. */
 public final class Fixtures {
@@ -25,5 +29,14 @@ public final class Fixtures {
   public static Package pkg(int id, String waybill, int routeId, float weight, long priceInCents,
       Priority priority, DeliveryStatus status) {
     return new Package(id, waybill, routeId, weight, priceInCents, priority, status);
+  }
+
+  public static Route route(int id, int originId, int destinyId, double distanceMeters,
+      Duration estimatedTime, long expenseInCents) {
+    return new Route(id, originId, destinyId, distanceMeters, estimatedTime, expenseInCents);
+  }
+
+  public static Zone zone(int id, String state, String city) {
+    return new Zone(id, state, city);
   }
 }

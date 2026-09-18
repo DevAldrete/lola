@@ -21,10 +21,10 @@ class DeliveriesTest {
 
   private static List<Package> sample() {
     return List.of(
-        pkg(3, "WB-ASAP-3", Priority.ASAP),
-        pkg(1, "WB-HIGH-1", Priority.HIGH),
-        pkg(2, "WB-ASAP-2", Priority.ASAP),
-        pkg(0, "WB-LOW-0", Priority.LOW));
+        pkg(3, "WB-URGENT-3", Priority.URGENT),
+        pkg(1, "WB-IMPORTANT-1", Priority.IMPORTANT),
+        pkg(2, "WB-URGENT-2", Priority.URGENT),
+        pkg(0, "WB-NORMAL-0", Priority.NORMAL));
   }
 
   @Test
@@ -33,7 +33,7 @@ class DeliveriesTest {
     sorted.sort(Deliveries.URGENCY);
 
     assertEquals(
-        List.of("WB-ASAP-2", "WB-ASAP-3", "WB-HIGH-1", "WB-LOW-0"),
+        List.of("WB-URGENT-2", "WB-URGENT-3", "WB-IMPORTANT-1", "WB-NORMAL-0"),
         sorted.stream().map(Package::waybill).toList());
   }
 
@@ -42,10 +42,10 @@ class DeliveriesTest {
     PriorityQueue<Package> queue = Deliveries.toPriorityQueue(sample());
 
     assertEquals(4, queue.size());
-    assertEquals("WB-ASAP-2", queue.dequeue().waybill());
-    assertEquals("WB-ASAP-3", queue.dequeue().waybill());
-    assertEquals("WB-HIGH-1", queue.dequeue().waybill());
-    assertEquals("WB-LOW-0", queue.dequeue().waybill());
+    assertEquals("WB-URGENT-2", queue.dequeue().waybill());
+    assertEquals("WB-URGENT-3", queue.dequeue().waybill());
+    assertEquals("WB-IMPORTANT-1", queue.dequeue().waybill());
+    assertEquals("WB-NORMAL-0", queue.dequeue().waybill());
   }
 
   @Test
@@ -53,7 +53,7 @@ class DeliveriesTest {
     List<Package> urgent = Deliveries.urgent(sample(), 2);
 
     assertEquals(
-        List.of("WB-ASAP-2", "WB-ASAP-3"),
+        List.of("WB-URGENT-2", "WB-URGENT-3"),
         urgent.stream().map(Package::waybill).toList());
   }
 
@@ -74,17 +74,17 @@ class DeliveriesTest {
     HashMap<String, Package> index = Deliveries.indexByWaybill(sample());
 
     assertEquals(4, index.size());
-    assertTrue(index.containsKey("WB-HIGH-1"));
+    assertTrue(index.containsKey("WB-IMPORTANT-1"));
   }
 
   @Test
   void findByWaybillReturnsTrackedPackage() {
     HashMap<String, Package> index = Deliveries.indexByWaybill(sample());
 
-    Package found = Deliveries.findByWaybill(index, "WB-HIGH-1").orElseThrow();
+    Package found = Deliveries.findByWaybill(index, "WB-IMPORTANT-1").orElseThrow();
 
     assertEquals(1, found.id());
-    assertEquals(Priority.HIGH, found.priority());
+    assertEquals(Priority.IMPORTANT, found.priority());
   }
 
   @Test
@@ -96,11 +96,11 @@ class DeliveriesTest {
 
   @Test
   void updateStatusReplacesOnlyMatchingWaybill() {
-    List<Package> updated = Deliveries.updateStatus(sample(), "WB-HIGH-1", DeliveryStatus.DELIVERED);
+    List<Package> updated = Deliveries.updateStatus(sample(), "WB-IMPORTANT-1", DeliveryStatus.DELIVERED);
 
     assertNotSame(sample(), updated);
     assertEquals(DeliveryStatus.DELIVERED,
-        Deliveries.findByWaybill(Deliveries.indexByWaybill(updated), "WB-HIGH-1").orElseThrow()
+        Deliveries.findByWaybill(Deliveries.indexByWaybill(updated), "WB-IMPORTANT-1").orElseThrow()
             .status());
     assertEquals(1, Deliveries.filterByStatus(updated, DeliveryStatus.DELIVERED).size());
     assertEquals(3, Deliveries.filterByStatus(updated, DeliveryStatus.CREATED).size());
@@ -110,7 +110,7 @@ class DeliveriesTest {
   void updateStatusDoesNotMutateInput() {
     List<Package> packages = sample();
 
-    Deliveries.updateStatus(packages, "WB-HIGH-1", DeliveryStatus.DELIVERED);
+    Deliveries.updateStatus(packages, "WB-IMPORTANT-1", DeliveryStatus.DELIVERED);
 
     assertEquals(DeliveryStatus.CREATED, packages.get(1).status());
   }
@@ -118,8 +118,8 @@ class DeliveriesTest {
   @Test
   void totalsWeightAndPrice() {
     List<Package> packages = List.of(
-        pkg(1, "WB-1", 1, 2.5f, 500, Priority.LOW, DeliveryStatus.CREATED),
-        pkg(2, "WB-2", 1, 1.5f, 1500, Priority.HIGH, DeliveryStatus.CREATED));
+        pkg(1, "WB-1", 1, 2.5f, 500, Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(2, "WB-2", 1, 1.5f, 1500, Priority.IMPORTANT, DeliveryStatus.CREATED));
 
     assertEquals(4.0f, Deliveries.totalWeight(packages), 0.0001f);
     assertEquals(2000L, Deliveries.totalPriceInCents(packages));
@@ -127,15 +127,15 @@ class DeliveriesTest {
 
   @Test
   void filtersPackagesByPriority() {
-    assertEquals(2, Deliveries.filterByPriority(sample(), Priority.ASAP).size());
-    assertEquals(1, Deliveries.filterByPriority(sample(), Priority.HIGH).size());
-    assertTrue(Deliveries.filterByPriority(sample(), Priority.MEDIUM).isEmpty());
+    assertEquals(2, Deliveries.filterByPriority(sample(), Priority.URGENT).size());
+    assertEquals(1, Deliveries.filterByPriority(sample(), Priority.IMPORTANT).size());
+    assertTrue(Deliveries.filterByPriority(sample(), Priority.MODERATE).isEmpty());
   }
 
   @Test
   void countsPackagesByPriority() {
-    assertEquals(2, Deliveries.countByPriority(sample(), Priority.ASAP));
-    assertEquals(1, Deliveries.countByPriority(sample(), Priority.LOW));
-    assertEquals(0, Deliveries.countByPriority(sample(), Priority.MEDIUM));
+    assertEquals(2, Deliveries.countByPriority(sample(), Priority.URGENT));
+    assertEquals(1, Deliveries.countByPriority(sample(), Priority.NORMAL));
+    assertEquals(0, Deliveries.countByPriority(sample(), Priority.MODERATE));
   }
 }

@@ -1,6 +1,7 @@
 package com.dev.lola;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 
 import com.dev.domain.DeliveryStatus;
 import com.dev.domain.Package;
@@ -14,6 +15,7 @@ public final class Fixtures {
   public static final int ROUTE_ID = 1;
   public static final float WEIGHT = 1f;
   public static final long PRICE_IN_CENTS = 1000L;
+  public static final LocalDateTime DEADLINE = LocalDateTime.of(2026, 1, 1, 12, 0);
 
   private Fixtures() {
   }
@@ -28,7 +30,12 @@ public final class Fixtures {
 
   public static Package pkg(int id, String waybill, int routeId, float weight, long priceInCents,
       Priority priority, DeliveryStatus status) {
-    return new Package(id, waybill, routeId, weight, priceInCents, priority, status);
+    return pkg(id, waybill, routeId, weight, priceInCents, DEADLINE, priority, status);
+  }
+
+  public static Package pkg(int id, String waybill, int routeId, float weight, long priceInCents,
+      LocalDateTime deadline, Priority priority, DeliveryStatus status) {
+    return new Package(id, waybill, routeId, weight, priceInCents, deadline, priority, status);
   }
 
   public static Route route(int id, int originId, int destinyId, double distanceMeters,

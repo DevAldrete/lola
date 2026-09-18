@@ -1,5 +1,6 @@
 package com.dev.domain;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public record Package(
@@ -8,11 +9,13 @@ public record Package(
     int routeId,
     float weight,
     long priceInCents,
+    LocalDateTime deadline,
     Priority priority,
     DeliveryStatus status) {
 
   public Package {
     Objects.requireNonNull(waybill, "waybill must not be null");
+    Objects.requireNonNull(deadline, "deadline must not be null");
     Objects.requireNonNull(priority, "priority must not be null");
     Objects.requireNonNull(status, "status must not be null");
 
@@ -29,11 +32,16 @@ public record Package(
     }
   }
 
+  /** Tracking code (guide number) used by the hash table. */
+  public String idGuia() {
+    return waybill;
+  }
+
   public Package withPriority(Priority priority) {
-    return new Package(id, waybill, routeId, weight, priceInCents, priority, status);
+    return new Package(id, waybill, routeId, weight, priceInCents, deadline, priority, status);
   }
 
   public Package withStatus(DeliveryStatus status) {
-    return new Package(id, waybill, routeId, weight, priceInCents, priority, status);
+    return new Package(id, waybill, routeId, weight, priceInCents, deadline, priority, status);
   }
 }

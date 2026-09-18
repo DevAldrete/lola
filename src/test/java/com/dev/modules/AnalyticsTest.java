@@ -27,9 +27,9 @@ class AnalyticsTest {
 
   private static List<Package> samplePackages() {
     return List.of(
-        pkg(1, "WB-1", 10, 2.5f, 500, Priority.LOW, DeliveryStatus.CREATED),
-        pkg(2, "WB-2", 20, 1.5f, 1500, Priority.HIGH, DeliveryStatus.DELIVERED),
-        pkg(3, "WB-3", 10, 4.0f, 1000, Priority.ASAP, DeliveryStatus.CREATED));
+        pkg(1, "WB-1", 10, 2.5f, 500, Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(2, "WB-2", 20, 1.5f, 1500, Priority.IMPORTANT, DeliveryStatus.DELIVERED),
+        pkg(3, "WB-3", 10, 4.0f, 1000, Priority.CRITICAL, DeliveryStatus.CREATED));
   }
 
   @Test

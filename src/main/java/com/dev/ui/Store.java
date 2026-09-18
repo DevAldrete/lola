@@ -1,6 +1,7 @@
 package com.dev.ui;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,15 +83,17 @@ public final class Store {
   }
 
   private static List<Package> samplePackages() {
+    LocalDateTime base = LocalDateTime.of(2026, 1, 10, 18, 0);
+
     return List.of(
-        new Package(1, "LOLA-0001", 1, 2.5f, 3_500, Priority.HIGH, DeliveryStatus.CREATED),
-        new Package(2, "LOLA-0002", 2, 8.0f, 12_900, Priority.ASAP, DeliveryStatus.IN_TRANSIT),
-        new Package(3, "LOLA-0003", 3, 1.2f, 2_400, Priority.MEDIUM, DeliveryStatus.CREATED),
-        new Package(4, "LOLA-0004", 4, 15.5f, 45_900, Priority.LOW, DeliveryStatus.DISPATCHED),
-        new Package(5, "LOLA-0005", 5, 3.3f, 7_800, Priority.HIGH, DeliveryStatus.DELIVERED),
-        new Package(6, "LOLA-0006", 6, 0.8f, 1_500, Priority.ASAP, DeliveryStatus.CREATED),
-        new Package(7, "LOLA-0007", 1, 5.0f, 6_400, Priority.MEDIUM, DeliveryStatus.DELIVERED),
-        new Package(8, "LOLA-0008", 2, 12.0f, 21_000, Priority.HIGH, DeliveryStatus.IN_TRANSIT));
+        new Package(1, "LOLA-0001", 1, 2.5f, 3_500, base.plusDays(2), Priority.IMPORTANT, DeliveryStatus.CREATED),
+        new Package(2, "LOLA-0002", 2, 8.0f, 12_900, base, Priority.CRITICAL, DeliveryStatus.IN_TRANSIT),
+        new Package(3, "LOLA-0003", 3, 1.2f, 2_400, base.plusDays(5), Priority.MODERATE, DeliveryStatus.CREATED),
+        new Package(4, "LOLA-0004", 4, 15.5f, 45_900, base.plusDays(9), Priority.NORMAL, DeliveryStatus.DISPATCHED),
+        new Package(5, "LOLA-0005", 5, 3.3f, 7_800, base.plusDays(1), Priority.IMPORTANT, DeliveryStatus.DELIVERED),
+        new Package(6, "LOLA-0006", 6, 0.8f, 1_500, base, Priority.CRITICAL, DeliveryStatus.CREATED),
+        new Package(7, "LOLA-0007", 1, 5.0f, 6_400, base.plusDays(4), Priority.MODERATE, DeliveryStatus.DELIVERED),
+        new Package(8, "LOLA-0008", 2, 12.0f, 21_000, base.plusDays(3), Priority.URGENT, DeliveryStatus.IN_TRANSIT));
   }
 
   private static List<Vehicle> sampleVehicles() {

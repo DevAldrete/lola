@@ -21,9 +21,9 @@ public final class Deliveries {
   private Deliveries() {
   }
 
-  /** Orders packages by urgency, breaking ties by id for deterministic results. */
+  /** Orders packages by urgency (highest level first), breaking ties by id. */
   public static final Comparator<Package> URGENCY = Comparator
-      .comparingInt((Package p) -> p.priority().ordinal())
+      .comparingInt((Package p) -> -p.priority().level())
       .thenComparingInt(Package::id);
 
   /** Loads the given packages into a min-priority queue ordered by urgency. */

@@ -68,7 +68,23 @@ public final class Store {
     return Optional.empty();
   }
 
+  public Optional<Route> findRoute(int routeId) {
+    for (Route route : routes) {
+      if (route.id() == routeId) {
+        return Optional.of(route);
+      }
+    }
+
+    return Optional.empty();
+  }
+
   public String cityName(int zoneId) {
     return findZone(zoneId).map(Zone::city).orElse("Zona " + zoneId);
+  }
+
+  public String routeDescription(int routeId) {
+    return findRoute(routeId)
+        .map(route -> cityName(route.originId()) + " -> " + cityName(route.destinyId()))
+        .orElse("Ruta " + routeId);
   }
 }

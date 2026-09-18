@@ -1,9 +1,13 @@
 package com.dev.ui;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /** Small presentation helpers shared by the panels. */
 public final class Format {
+
+  private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
   private Format() {
   }
@@ -24,5 +28,13 @@ public final class Format {
     return hours > 0
         ? hours + "h " + duration.toMinutesPart() + "min"
         : duration.toMinutes() + "min";
+  }
+
+  public static String dateTime(LocalDateTime value) {
+    return value == null ? "-" : value.format(DATE_TIME);
+  }
+
+  public static String weight(float kilograms) {
+    return String.format("%.1f kg", kilograms);
   }
 }

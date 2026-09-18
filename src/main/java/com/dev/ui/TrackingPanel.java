@@ -2,6 +2,7 @@ package com.dev.ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,13 +10,11 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableModel;
 
 import com.dev.domain.DeliveryStatus;
@@ -24,8 +23,8 @@ import com.dev.domain.Priority;
 import com.dev.ds.HashMap;
 import com.dev.modules.Deliveries;
 
-/** Package table with waybill tracking, urgency view and status transitions. */
-public final class DeliveriesPanel extends JPanel implements Refreshable {
+/** Package table with waybill tracking, filters and status transitions. */
+public final class TrackingPanel extends JPanel implements Refreshable {
 
   private static final long serialVersionUID = 1L;
 
@@ -36,19 +35,20 @@ public final class DeliveriesPanel extends JPanel implements Refreshable {
   private final JTextField waybillField = new JTextField(14);
   private final JComboBox<String> statusFilter = new JComboBox<>();
   private final JComboBox<String> priorityFilter = new JComboBox<>();
-  private final JSpinner urgentCount = new JSpinner(new SpinnerNumberModel(3, 0, 100, 1));
+  private final JTextArea detail = new JTextArea(5, 30);
   private final JLabel message = new JLabel(" ");
 
   private List<Package> displayed = List.of();
 
-  public DeliveriesPanel(Store store) {
+  public TrackingPanel(Store store) {
     this.store = store;
 
     setLayout(new BorderLayout(8, 8));
     setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
     model = new DefaultTableModel(
-        new Object[] { "Id", "Waybill", "Route", "Weight (kg)", "Price", "Priority", "Status" }, 0) {
+        new Object[] { "Id", "Guía", "Ruta", "Peso", "Precio", "Prioridad", "Estado", "Límite" },
+        0) {
       private static final long serialVersionUID = 1L;
 
       @Override
@@ -63,7 +63,7 @@ public final class DeliveriesPanel extends JPanel implements Refreshable {
 
     add(buildFilters(), BorderLayout.NORTH);
     add(new JScrollPane(table), BorderLayout.CENTER);
-    add(buildActions(), BorderLayout.SOUTH);
+    add(buildFooter(), BorderLayout.SOUTH);
 
     refresh();
   }
@@ -71,34 +71,35 @@ public final class DeliveriesPanel extends JPanel implements Refreshable {
   private JPanel buildFilters() {
     JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
 
-    bar.add(new JLabel("Waybill:"));
+    bar.add(new JLabel("Guía:"));
     bar.add(waybillField);
 
-    JButton track = new JButton("Track");
+    JButton track = new JButton("Buscar");
     track.addActionListener(event -> track());
     bar.add(track);
 
-    bar.add(new JLabel("Status:"));
-    statusFilter.addItem("All");
+    bar.add(new JLabel("Estado:"));
+    statusFilter.addItem("Todos");
     for (DeliveryStatus status : DeliveryStatus.values()) {
       statusFilter.addItem(status.name());
     }
     statusFilter.addActionListener(event -> refresh());
     bar.add(statusFilter);
 
-    bar.add(new JLabel("Priority:"));
-    priorityFilter.addItem("All");
+    bar.add(new JLabel("Prioridad:"));
+    priorityFilter.addItem("Todas");
     for (Priority priority : Priority.values()) {
       priorityFilter.addItem(priority.name());
     }
     priorityFilter.addActionListener(event -> refresh());
     bar.add(priorityFilter);
 
-    JButton clear = new JButton("Clear");
+    JButton clear = new JButton("Limpiar");
     clear.addActionListener(event -> {
       waybillField.setText("");
-      statusFilter.setSelectedItem("All");
-      priorityFilter.setSelectedItem("All");
+      statusFilter.setSelectedItem("Todos");
+      priorityFilter.setSelectedItem("Todas");
+      detail.setText("");
       message.setText(" ");
       refresh();
     });
@@ -107,27 +108,28 @@ public final class DeliveriesPanel extends JPanel implements Refreshable {
     return bar;
   }
 
-  private JPanel buildActions() {
-    JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+  private JPanel buildFooter() {
+    JPanel footer = new JPanel(new BorderLayout(8, 8));
 
-    bar.add(new JLabel("Urgent top:"));
-    bar.add(urgentCount);
+    detail.setEditable(false);
+    detail.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+    detail.setBorder(BorderFactory.createTitledBorder("Detalle del paquete"));
 
-    JButton urgent = new JButton("Show urgent");
-    urgent.addActionListener(event -> showUrgent());
-    bar.add(urgent);
+    JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
 
-    JButton advance = new JButton("Advance status");
+    JButton advance = new JButton("Avanzar estado");
     advance.addActionListener(event -> advanceSelected());
-    bar.add(advance);
+    actions.add(advance);
 
-    JButton cancel = new JButton("Cancel selected");
+    JButton cancel = new JButton("Cancelar paquete");
     cancel.addActionListener(event -> setSelectedStatus(DeliveryStatus.CANCELED));
-    bar.add(cancel);
+    actions.add(cancel);
+    actions.add(message);
 
-    bar.add(message);
+    footer.add(new JScrollPane(detail), BorderLayout.CENTER);
+    footer.add(actions, BorderLayout.SOUTH);
 
-    return bar;
+    return footer;
   }
 
   @Override
@@ -138,12 +140,13 @@ public final class DeliveriesPanel extends JPanel implements Refreshable {
     for (Package pkg : displayed) {
       model.addRow(new Object[] {
           pkg.id(),
-          pkg.waybill(),
+          pkg.idGuia(),
           pkg.routeId(),
-          pkg.weight(),
+          Format.weight(pkg.weight()),
           Format.money(pkg.priceInCents()),
-          pkg.priority(),
-          pkg.status() });
+          pkg.priority().level() + " - " + pkg.priority().name(),
+          pkg.status(),
+          Format.dateTime(pkg.deadline()) });
     }
   }
 
@@ -151,12 +154,12 @@ public final class DeliveriesPanel extends JPanel implements Refreshable {
     List<Package> filtered = new ArrayList<>(store.packages());
 
     String status = (String) statusFilter.getSelectedItem();
-    if (status != null && !"All".equals(status)) {
+    if (status != null && !"Todos".equals(status)) {
       filtered = new ArrayList<>(Deliveries.filterByStatus(filtered, DeliveryStatus.valueOf(status)));
     }
 
     String priority = (String) priorityFilter.getSelectedItem();
-    if (priority != null && !"All".equals(priority)) {
+    if (priority != null && !"Todas".equals(priority)) {
       filtered = new ArrayList<>(Deliveries.filterByPriority(filtered, Priority.valueOf(priority)));
     }
 
@@ -167,67 +170,58 @@ public final class DeliveriesPanel extends JPanel implements Refreshable {
     String waybill = waybillField.getText().trim();
 
     if (waybill.isEmpty()) {
-      message.setText("Enter a waybill to track");
+      message.setText("Ingrese una guía para buscar.");
       return;
     }
 
     HashMap<String, Package> index = Deliveries.indexByWaybill(store.packages());
-
     var found = Deliveries.findByWaybill(index, waybill);
+
     if (found.isEmpty()) {
-      message.setText("Not found: " + waybill);
+      detail.setText("Guía no registrada: " + waybill);
+      message.setText("Sin resultados.");
       return;
     }
 
+    Package pkg = found.get();
+    detail.setText(describe(pkg));
     selectByWaybill(waybill);
-    message.setText("Found " + found.get().waybill() + " (" + found.get().status() + ")");
+    message.setText("Encontrado: " + pkg.idGuia());
+  }
+
+  private String describe(Package pkg) {
+    return "Guía           : " + pkg.idGuia() + "\n"
+        + "Ruta           : " + store.routeDescription(pkg.routeId()) + "\n"
+        + "Costo          : " + Format.money(pkg.priceInCents()) + "\n"
+        + "Peso           : " + Format.weight(pkg.weight()) + "\n"
+        + "Prioridad      : " + pkg.priority().level() + " - " + pkg.priority().name() + "\n"
+        + "Estado         : " + pkg.status() + "\n"
+        + "Fecha límite   : " + Format.dateTime(pkg.deadline());
   }
 
   private void selectByWaybill(String waybill) {
     for (int row = 0; row < displayed.size(); row++) {
-      if (displayed.get(row).waybill().equals(waybill)) {
+      if (displayed.get(row).idGuia().equals(waybill)) {
         table.setRowSelectionInterval(row, row);
         return;
       }
     }
-    message.setText(waybill + " is hidden by the current filters");
-  }
 
-  private void showUrgent() {
-    int count = (int) urgentCount.getValue();
-    List<Package> urgent = Deliveries.urgent(store.packages(), count);
-
-    StringBuilder text = new StringBuilder();
-    int position = 1;
-
-    for (Package pkg : urgent) {
-      text.append(position++).append(". ")
-          .append(pkg.waybill())
-          .append("   [").append(pkg.priority()).append("]")
-          .append("   ").append(pkg.status())
-          .append('\n');
-    }
-
-    if (urgent.isEmpty()) {
-      text.append("No packages to show.");
-    }
-
-    JOptionPane.showMessageDialog(this, text.toString(), "Urgent deliveries",
-        JOptionPane.INFORMATION_MESSAGE);
+    message.setText("La guía existe pero está oculta por los filtros.");
   }
 
   private void advanceSelected() {
     Package pkg = selectedPackage();
 
     if (pkg == null) {
-      message.setText("Select a package first");
+      message.setText("Seleccione un paquete.");
       return;
     }
 
     DeliveryStatus next = nextStatus(pkg.status());
 
     if (next == pkg.status()) {
-      message.setText(pkg.waybill() + " is already " + next);
+      message.setText(pkg.idGuia() + " ya está en " + next);
       return;
     }
 
@@ -238,14 +232,15 @@ public final class DeliveriesPanel extends JPanel implements Refreshable {
     Package pkg = selectedPackage();
 
     if (pkg == null) {
-      message.setText("Select a package first");
+      message.setText("Seleccione un paquete.");
       return;
     }
 
-    store.setPackages(Deliveries.updateStatus(store.packages(), pkg.waybill(), status));
+    store.setPackages(Deliveries.updateStatus(store.packages(), pkg.idGuia(), status));
     refresh();
-    selectByWaybill(pkg.waybill());
-    message.setText(pkg.waybill() + " -> " + status);
+    selectByWaybill(pkg.idGuia());
+    detail.setText(describe(Deliveries.indexByWaybill(store.packages()).get(pkg.idGuia())));
+    message.setText(pkg.idGuia() + " -> " + status);
   }
 
   private Package selectedPackage() {

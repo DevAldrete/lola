@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -137,5 +138,66 @@ class DeliveriesTest {
     assertEquals(2, Deliveries.countByPriority(sample(), Priority.URGENT));
     assertEquals(1, Deliveries.countByPriority(sample(), Priority.NORMAL));
     assertEquals(0, Deliveries.countByPriority(sample(), Priority.MODERATE));
+  }
+
+  @Test
+  void dispatchNextPicksMostUrgentAndMarksInTransit() {
+    Deliveries.Dispatch dispatch = Deliveries.dispatchNext(sample()).orElseThrow();
+
+    assertEquals("WB-URGENT-3", dispatch.dispatched().idGuia());
+    assertEquals(DeliveryStatus.IN_TRANSIT, dispatch.dispatched().status());
+    assertEquals(4, dispatch.packages().size());
+    assertEquals(DeliveryStatus.IN_TRANSIT,
+        Deliveries.indexByWaybill(dispatch.packages()).get("WB-URGENT-3").status());
+  }
+
+  @Test
+  void dispatchNextSkipsNonDispatchablePackages() {
+    List<Package> packages = List.of(
+        pkg(1, "WB-DELIVERED", Priority.CRITICAL, DeliveryStatus.DELIVERED),
+        pkg(2, "WB-CANCELED", Priority.CRITICAL, DeliveryStatus.CANCELED),
+        pkg(3, "WB-PENDING", Priority.NORMAL, DeliveryStatus.CREATED));
+
+    Deliveries.Dispatch dispatch = Deliveries.dispatchNext(packages).orElseThrow();
+
+    assertEquals("WB-PENDING", dispatch.dispatched().idGuia());
+  }
+
+  @Test
+  void dispatchNextReturnsEmptyWhenNothingIsDispatchable() {
+    List<Package> packages = List.of(
+        pkg(1, "WB-A", Priority.URGENT, DeliveryStatus.DELIVERED),
+        pkg(2, "WB-B", Priority.NORMAL, DeliveryStatus.IN_TRANSIT));
+
+    assertTrue(Deliveries.dispatchNext(packages).isEmpty());
+  }
+
+  @Test
+  void sortsPackagesByCostAndDeadline() {
+    LocalDateTime base = LocalDateTime.of(2026, 3, 1, 8, 0);
+
+    List<Package> packages = List.of(
+        pkg(1, "WB-1", 1, 1f, 1500, base.plusDays(3), Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(2, "WB-2", 1, 1f, 500, base.plusDays(1), Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(3, "WB-3", 1, 1f, 1000, base.plusDays(2), Priority.NORMAL, DeliveryStatus.CREATED));
+
+    assertEquals(List.of("WB-2", "WB-3", "WB-1"),
+        Deliveries.sortByCost(packages).stream().map(Package::idGuia).toList());
+    assertEquals(List.of("WB-2", "WB-3", "WB-1"),
+        Deliveries.sortByDeadline(packages).stream().map(Package::idGuia).toList());
+  }
+
+  @Test
+  void sortByPriorityMatchesUrgencyOrder() {
+    assertEquals(List.of("WB-URGENT-2", "WB-URGENT-3", "WB-IMPORTANT-1", "WB-NORMAL-0"),
+        Deliveries.sortByPriority(sample()).stream().map(Package::idGuia).toList());
+  }
+
+  @Test
+  void quickSortProducesTheSameOrderAsMergeSort() {
+    assertEquals(
+        Deliveries.sortPackages(sample(), Deliveries.BY_COST).stream().map(Package::idGuia).toList(),
+        Deliveries.sortPackagesQuick(sample(), Deliveries.BY_COST).stream().map(Package::idGuia)
+            .toList());
   }
 }

@@ -9,22 +9,39 @@ import java.util.Optional;
 import com.dev.domain.DeliveryStatus;
 import com.dev.domain.Package;
 import com.dev.domain.Priority;
+import com.dev.ds.BucketQueue;
 import com.dev.ds.HashMap;
 import com.dev.ds.PriorityQueue;
+import com.dev.ds.Sorting;
 
 /**
- * Operations over packages: urgency ordering, waybill lookup and tracking.
- * All functions are stateless and return new data, keeping packages immutable.
+ * Operations over packages: urgency ordering, dispatch, waybill lookup,
+ * tracking, sorting and simple aggregates. All functions are stateless and
+ * return new data, keeping packages immutable.
  */
 public final class Deliveries {
 
   private Deliveries() {
   }
 
+  /** Outcome of dispatching the next package: the chosen one plus the new list. */
+  public record Dispatch(Package dispatched, List<Package> packages) {
+  }
+
   /** Orders packages by urgency (highest level first), breaking ties by id. */
   public static final Comparator<Package> URGENCY = Comparator
       .comparingInt((Package p) -> -p.priority().level())
       .thenComparingInt(Package::id);
+
+  /** Orders packages from cheapest to most expensive. */
+  public static final Comparator<Package> BY_COST = Comparator.comparingLong(Package::priceInCents);
+
+  /** Orders packages from earliest to latest deadline. */
+  public static final Comparator<Package> BY_DEADLINE = Comparator.comparing(Package::deadline);
+
+  // ---------------------------------------------------------------------------
+  // Priority dispatch
+  // ---------------------------------------------------------------------------
 
   /** Loads the given packages into a min-priority queue ordered by urgency. */
   public static PriorityQueue<Package> toPriorityQueue(List<Package> packages) {
@@ -56,6 +73,40 @@ public final class Deliveries {
     return result;
   }
 
+  /**
+   * Extracts the most urgent dispatchable package in O(1) and moves it to
+   * {@code IN_TRANSIT}. Equal priorities are served first-in first-out.
+   * Returns empty when nothing is left to dispatch.
+   */
+  public static Optional<Dispatch> dispatchNext(List<Package> packages) {
+    Objects.requireNonNull(packages, "packages must not be null");
+
+    BucketQueue<Package> queue = new BucketQueue<>(Priority.CRITICAL.level());
+
+    for (Package pkg : packages) {
+      if (isDispatchable(pkg.status())) {
+        queue.enqueue(pkg, pkg.priority().level());
+      }
+    }
+
+    if (queue.isEmpty()) {
+      return Optional.empty();
+    }
+
+    Package next = queue.dequeueMax();
+    List<Package> updated = updateStatus(packages, next.idGuia(), DeliveryStatus.IN_TRANSIT);
+
+    return Optional.of(new Dispatch(next.withStatus(DeliveryStatus.IN_TRANSIT), updated));
+  }
+
+  private static boolean isDispatchable(DeliveryStatus status) {
+    return status == DeliveryStatus.CREATED || status == DeliveryStatus.DISPATCHED;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Waybill index and tracking
+  // ---------------------------------------------------------------------------
+
   /** Builds a waybill-to-package index for constant time lookups. */
   public static HashMap<String, Package> indexByWaybill(List<Package> packages) {
     Objects.requireNonNull(packages, "packages must not be null");
@@ -63,7 +114,7 @@ public final class Deliveries {
     HashMap<String, Package> index = new HashMap<>(Math.max(packages.size() * 2, 2));
 
     for (Package pkg : packages) {
-      index.put(pkg.waybill(), pkg);
+      index.put(pkg.idGuia(), pkg);
     }
 
     return index;
@@ -87,11 +138,15 @@ public final class Deliveries {
     List<Package> updated = new ArrayList<>(packages.size());
 
     for (Package pkg : packages) {
-      updated.add(pkg.waybill().equals(waybill) ? pkg.withStatus(status) : pkg);
+      updated.add(pkg.idGuia().equals(waybill) ? pkg.withStatus(status) : pkg);
     }
 
     return updated;
   }
+
+  // ---------------------------------------------------------------------------
+  // Filters
+  // ---------------------------------------------------------------------------
 
   /** Returns the packages carrying the given status. */
   public static List<Package> filterByStatus(List<Package> packages, DeliveryStatus status) {
@@ -124,6 +179,37 @@ public final class Deliveries {
 
     return result;
   }
+
+  // ---------------------------------------------------------------------------
+  // Sorting reports
+  // ---------------------------------------------------------------------------
+
+  /** Sorts packages with the given comparator using stable merge sort. */
+  public static List<Package> sortPackages(List<Package> packages, Comparator<Package> comparator) {
+    return Sorting.mergeSort(packages, comparator);
+  }
+
+  /** Sorts packages with the given comparator using quick sort. */
+  public static List<Package> sortPackagesQuick(List<Package> packages,
+      Comparator<Package> comparator) {
+    return Sorting.quickSort(packages, comparator);
+  }
+
+  public static List<Package> sortByCost(List<Package> packages) {
+    return Sorting.mergeSort(packages, BY_COST);
+  }
+
+  public static List<Package> sortByDeadline(List<Package> packages) {
+    return Sorting.mergeSort(packages, BY_DEADLINE);
+  }
+
+  public static List<Package> sortByPriority(List<Package> packages) {
+    return Sorting.mergeSort(packages, URGENCY);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Aggregates
+  // ---------------------------------------------------------------------------
 
   /** Sums the weight of every package. */
   public static float totalWeight(List<Package> packages) {

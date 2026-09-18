@@ -1,6 +1,8 @@
 package com.dev.modules;
 
+import static com.dev.lola.Fixtures.pkg;
 import static com.dev.lola.Fixtures.route;
+import static com.dev.lola.Fixtures.vehicle;
 import static com.dev.lola.Fixtures.zone;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,10 +12,15 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.dev.domain.DeliveryStatus;
+import com.dev.domain.Package;
+import com.dev.domain.Priority;
 import com.dev.domain.Route;
+import com.dev.domain.Vehicle;
 import com.dev.domain.Zone;
 import com.dev.ds.Graph;
 import com.dev.ds.HashMap;
+import com.dev.ds.WeightedGraph;
 
 class RoutingTest {
 
@@ -108,5 +115,79 @@ class RoutingTest {
   @Test
   void partitionsHandleEmptyInput() {
     assertTrue(Routing.partitionByState(List.of()).keys().isEmpty());
+  }
+
+  @Test
+  void cumulativeCostAndDistanceSumEveryRoute() {
+    assertEquals(1800L, Routing.cumulativeCost(sampleRoutes()));
+    assertEquals(700d, Routing.cumulativeDistance(sampleRoutes()), 0.0001d);
+    assertEquals(0L, Routing.cumulativeCost(List.of()));
+    assertEquals(0d, Routing.cumulativeDistance(List.of()), 0.0001d);
+  }
+
+  @Test
+  void weightedPathPrefersCheapestNotFewestStops() {
+    List<Route> routes = List.of(
+        route(1, 1, 2, 100, Duration.ofMinutes(10), 100),
+        route(2, 1, 3, 100, Duration.ofMinutes(10), 500),
+        route(3, 2, 3, 100, Duration.ofMinutes(10), 100),
+        route(4, 3, 4, 100, Duration.ofMinutes(10), 100));
+
+    Graph<Integer> unweighted = Routing.network(routes);
+    WeightedGraph<Integer> byCost = Routing.weightedNetwork(routes, Routing.RouteWeight.COST);
+
+    assertEquals(List.of(1, 3, 4), Routing.shortestPath(unweighted, 1, 4));
+
+    WeightedGraph.Path<Integer> path = Routing.weightedShortestPath(byCost, 1, 4).orElseThrow();
+
+    assertEquals(List.of(1, 2, 3, 4), path.vertices());
+    assertEquals(300d, path.weight(), 0.0001d);
+  }
+
+  @Test
+  void weightedPathCanWeightByTimeAndDistance() {
+    List<Route> routes = List.of(
+        route(1, 1, 2, 500, Duration.ofMinutes(5), 900),
+        route(2, 2, 3, 100, Duration.ofMinutes(5), 900),
+        route(3, 1, 3, 100, Duration.ofMinutes(30), 100));
+
+    WeightedGraph<Integer> byTime = Routing.weightedNetwork(routes, Routing.RouteWeight.TIME);
+    WeightedGraph<Integer> byDistance = Routing.weightedNetwork(routes,
+        Routing.RouteWeight.DISTANCE);
+
+    assertEquals(600d, Routing.weightedShortestPath(byTime, 1, 3).orElseThrow().weight(),
+        0.0001d);
+    assertEquals(100d, Routing.weightedShortestPath(byDistance, 1, 3).orElseThrow().weight(),
+        0.0001d);
+  }
+
+  @Test
+  void partitionDeliveriesSplitsAndBalancesAcrossVehicles() {
+    List<Package> packages = List.of(
+        pkg(1, "WB-1", 1, 5f, 100, Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(2, "WB-2", 1, 1f, 100, Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(3, "WB-3", 1, 1f, 100, Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(4, "WB-4", 1, 1f, 100, Priority.NORMAL, DeliveryStatus.CREATED));
+
+    List<Vehicle> vehicles = List.of(
+        vehicle(1, "AAA-0001", 5_000f),
+        vehicle(2, "BBB-0002", 1_000f));
+
+    List<Routing.Assignment> assignments = Routing.partitionDeliveries(packages, vehicles);
+
+    assertEquals(2, assignments.size());
+    assertEquals(1, assignments.get(0).vehicle().id());
+    assertEquals(6.0f, assignments.get(0).totalWeight(), 0.0001f);
+
+    int assigned = assignments.stream().mapToInt(a -> a.packages().size()).sum();
+    assertEquals(packages.size(), assigned);
+  }
+
+  @Test
+  void partitionDeliveriesHandlesEmptyInputs() {
+    assertTrue(Routing.partitionDeliveries(List.of(), List.of(vehicle(1, "AAA-0001", 100f)))
+        .isEmpty());
+    assertTrue(Routing.partitionDeliveries(
+        List.of(pkg(1, "WB-1", Priority.NORMAL)), List.of()).isEmpty());
   }
 }

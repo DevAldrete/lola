@@ -3,10 +3,13 @@ package com.dev.lola;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import com.dev.domain.CenterLevel;
 import com.dev.domain.DeliveryStatus;
+import com.dev.domain.DistributionCenter;
 import com.dev.domain.Package;
 import com.dev.domain.Priority;
 import com.dev.domain.Route;
+import com.dev.domain.Vehicle;
 import com.dev.domain.Zone;
 
 /** Shared factories for building test data without repeating constructor noise. */
@@ -45,5 +48,14 @@ public final class Fixtures {
 
   public static Zone zone(int id, String state, String city) {
     return new Zone(id, state, city);
+  }
+
+  public static Vehicle vehicle(int id, String plate, float capacityKg) {
+    return new Vehicle(id, plate, capacityKg);
+  }
+
+  public static DistributionCenter center(int id, String name, CenterLevel level, int parentId,
+      int zoneId) {
+    return new DistributionCenter(id, name, level, parentId, zoneId);
   }
 }

@@ -51,14 +51,30 @@ public final class Analytics {
   public static Optional<Route> mostExpensiveRoute(List<Route> routes) {
     Objects.requireNonNull(routes, "routes must not be null");
 
-    return routes.stream().max((a, b) -> Long.compare(a.expenseInCents(), b.expenseInCents()));
+    Route mostExpensive = null;
+
+    for (Route route : routes) {
+      if (mostExpensive == null || route.expenseInCents() > mostExpensive.expenseInCents()) {
+        mostExpensive = route;
+      }
+    }
+
+    return Optional.ofNullable(mostExpensive);
   }
 
   /** Returns the route with the lowest expense, or empty when there are none. */
   public static Optional<Route> cheapestRoute(List<Route> routes) {
     Objects.requireNonNull(routes, "routes must not be null");
 
-    return routes.stream().min((a, b) -> Long.compare(a.expenseInCents(), b.expenseInCents()));
+    Route cheapest = null;
+
+    for (Route route : routes) {
+      if (cheapest == null || route.expenseInCents() < cheapest.expenseInCents()) {
+        cheapest = route;
+      }
+    }
+
+    return Optional.ofNullable(cheapest);
   }
 
   /** Sums the distance of every route, in meters. */
@@ -106,7 +122,15 @@ public final class Analytics {
   public static Optional<Package> heaviestPackage(List<Package> packages) {
     Objects.requireNonNull(packages, "packages must not be null");
 
-    return packages.stream().max((a, b) -> Float.compare(a.weight(), b.weight()));
+    Package heaviest = null;
+
+    for (Package pkg : packages) {
+      if (heaviest == null || pkg.weight() > heaviest.weight()) {
+        heaviest = pkg;
+      }
+    }
+
+    return Optional.ofNullable(heaviest);
   }
 
   /** Counts packages per delivery status. */

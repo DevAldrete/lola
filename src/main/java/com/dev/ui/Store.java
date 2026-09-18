@@ -55,7 +55,13 @@ public final class Store {
   }
 
   public Optional<Zone> findZone(int zoneId) {
-    return zones.stream().filter(zone -> zone.id() == zoneId).findFirst();
+    for (Zone zone : zones) {
+      if (zone.id() == zoneId) {
+        return Optional.of(zone);
+      }
+    }
+
+    return Optional.empty();
   }
 
   public String cityName(int zoneId) {

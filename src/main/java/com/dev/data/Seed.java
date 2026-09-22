@@ -31,8 +31,6 @@ public final class Seed {
 
   private static final DeliveryStatus[] STATUSES = {
       DeliveryStatus.CREATED,
-      DeliveryStatus.CREATED,
-      DeliveryStatus.CREATED,
       DeliveryStatus.DISPATCHED,
       DeliveryStatus.IN_TRANSIT,
       DeliveryStatus.DELIVERED,

@@ -28,14 +28,17 @@ public final class Deliveries {
   public record Dispatch(Package dispatched, List<Package> packages) {
   }
 
+  // Urgencia: mayor nivel primero; en empate, menor id.
   /** Orders packages by urgency (highest level first), breaking ties by id. */
   public static final Comparator<Package> URGENCY = Comparator
       .comparingInt((Package p) -> -p.priority().level())
       .thenComparingInt(Package::id);
 
+  // Reportes: de más barato a más caro.
   /** Orders packages from cheapest to most expensive. */
   public static final Comparator<Package> BY_COST = Comparator.comparingLong(Package::priceInCents);
 
+  // Reportes: de fecha límite más próxima a más lejana.
   /** Orders packages from earliest to latest deadline. */
   public static final Comparator<Package> BY_DEADLINE = Comparator.comparing(Package::deadline);
 
@@ -81,6 +84,7 @@ public final class Deliveries {
   public static Optional<Dispatch> dispatchNext(List<Package> packages) {
     Objects.requireNonNull(packages, "packages must not be null");
 
+    // Un bucket por nivel de prioridad: extracción del máximo en O(1), FIFO en empates.
     BucketQueue<Package> queue = new BucketQueue<>(Priority.CRITICAL.level());
 
     for (Package pkg : packages) {
@@ -111,6 +115,7 @@ public final class Deliveries {
   public static HashMap<String, Package> indexByWaybill(List<Package> packages) {
     Objects.requireNonNull(packages, "packages must not be null");
 
+    // Índice guía -> paquete: rastreo en tiempo promedio O(1).
     HashMap<String, Package> index = new HashMap<>(Math.max(packages.size() * 2, 2));
 
     for (Package pkg : packages) {

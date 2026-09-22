@@ -42,6 +42,7 @@ public final class Centers {
     Tree<DistributionCenter> tree = new Tree<>();
     tree.setRoot(root);
 
+    // Índice id -> nodo para enlazar cada centro con su padre.
     HashMap<Integer, Tree.Node<DistributionCenter>> nodes = new HashMap<>(Math.max(centers.size() * 2, 2));
     nodes.put(root.id(), tree.root());
 
@@ -71,6 +72,7 @@ public final class Centers {
       }
     }
 
+    // Los centros pendientes apuntan a un padre inexistente (posible ciclo).
     if (!pending.isEmpty()) {
       throw new IllegalArgumentException("Centers reference unknown parents: " + pending);
     }

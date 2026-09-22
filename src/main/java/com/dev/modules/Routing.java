@@ -55,6 +55,7 @@ public final class Routing {
   public static Graph<Integer> network(List<Route> routes) {
     Objects.requireNonNull(routes, "routes must not be null");
 
+    // Nodos = zonas, aristas = rutas dirigidas (sin peso).
     Graph<Integer> graph = new Graph<>(Math.max(routes.size() * 2, 2));
 
     for (Route route : routes) {
@@ -76,6 +77,7 @@ public final class Routing {
     Objects.requireNonNull(routes, "routes must not be null");
     Objects.requireNonNull(metric, "metric must not be null");
 
+    // Misma red, pero con peso (tiempo, costo o distancia) para Dijkstra.
     WeightedGraph<Integer> graph = new WeightedGraph<>(Math.max(routes.size() * 2, 2));
 
     for (Route route : routes) {
@@ -133,6 +135,7 @@ public final class Routing {
     return cumulativeTime(routes, routes.size());
   }
 
+  // Recursión: último tramo + acumulado de los anteriores.
   private static Duration cumulativeTime(List<Route> routes, int count) {
     if (count == 0) {
       return Duration.ZERO;
@@ -148,6 +151,7 @@ public final class Routing {
     return cumulativeCost(routes, routes.size());
   }
 
+  // Recursión: costo del último tramo + acumulado previo.
   private static long cumulativeCost(List<Route> routes, int count) {
     if (count == 0) {
       return 0L;
@@ -163,6 +167,7 @@ public final class Routing {
     return cumulativeDistance(routes, routes.size());
   }
 
+  // Recursión: distancia del último tramo + acumulado previo.
   private static double cumulativeDistance(List<Route> routes, int count) {
     if (count == 0) {
       return 0d;
@@ -182,6 +187,7 @@ public final class Routing {
     return partitionByState(zones, 0, zones.size());
   }
 
+  // Divide y vencerás: parte la lista a la mitad y combina los grupos por estado.
   private static HashMap<String, List<Zone>> partitionByState(List<Zone> zones, int from, int to) {
     if (to - from <= 1) {
       HashMap<String, List<Zone>> single = new HashMap<>(2);
@@ -259,6 +265,7 @@ public final class Routing {
     return assignments;
   }
 
+  // Divide el lote en tantos segmentos como partes solicitadas.
   private static List<List<Package>> divide(List<Package> packages, int parts) {
     if (parts <= 1 || packages.size() <= 1) {
       List<List<Package>> single = new ArrayList<>();

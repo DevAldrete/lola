@@ -1,98 +1,118 @@
-# Sistema de Gestión de Logística y Envíos (Escenario 2)
+# LOLA — Sistema de Gestión de Logística y Envíos
 
-Sistema integral de gestión de operaciones logísticas, rastreo de paquetes, planificación de rutas y optimización de entregas construido mediante **estructuras de datos avanzadas** y **algoritmos de optimización** desarrollados a la medida.
+Aplicación de escritorio para gestionar operaciones logísticas: despacho por
+urgencia, rastreo de paquetes, red de rutas, asignación de repartos, jerarquía
+de centros de distribución y reportes.
 
----
-
-## Descripción General
-
-Este proyecto resuelve los desafíos operativos de una empresa de logística moderna:
-- **Gestión e ingesta de paquetes y rutas** con volúmenes mínimos de operación (50 paquetes, 10 rutas/centros).
-- **Procesamiento de envíos prioritarios y urgentes**.
-- **Modelado de red de transporte interurbana y distribución geográfica**.
-- **Búsqueda e indexación instantánea de guías y paquetes**.
-- **Cálculo recursivo de tiempos e iteración jerárquica de la flotilla**.
-
-> **Nota Teórica / Técnica**: Las estructuras de datos principales y algoritmos de ordenamiento/búsqueda fueron implementados desde cero sin depender de bibliotecas preconstruidas (`java.util.PriorityQueue`, `java.util.HashMap`, etc.) para cumplir con los lineamientos del curso.
+Las estructuras de datos y los algoritmos están **implementados desde cero**
+(cola de prioridad, tabla hash, grafo ponderado, árbol, ordenamientos y
+búsqueda) sin usar las colecciones equivalentes de `java.util`, como exige el
+curso.
 
 ---
 
-## Cobertura de Requisitos y Estructuras de Datos
+## Cómo ejecutar
 
-| Estructura / Algoritmo | Componente en el Sistema | Problema que Resuelve | Ventaja Operativa |
-| :--- | :--- | :--- | :--- |
-| **Cola de Prioridad** (`PriorityQueue`) | Módulo de Despacho de Urgencias | Priorización de paquetes urgentes/expres en tiempo real. | Permite extraer el paquete con mayor urgencia en $O(1)$ sin ordenar la lista completa. |
-| **Tabla Hash** (`HashMap`) | Rastreo por Número de Guía | Consulta e indexación inmediata de un paquete usando su `idGuia`. | Búsqueda en tiempo promedio constante $O(1)$, evitando recorridos lineales $O(n)$. |
-| **Grafo Dirigido/Ponderado** | Red de Rutas y Cobertura (10+ Nodos) | Representación de nodos (centros/ciudades) y aristas (rutas con tiempos/distancias). | Facilita el modelado realista de conexiones entre centros de distribución y transporte. |
-| **Árbol Binario** | Jerarquía de Centros y Flotilla | Organización de la estructura organizacional y de distribución (Nacional $\rightarrow$ Regional $\rightarrow$ Local). | Organización jerárquica con búsquedas e inserciones logarítmicas $O(\log n)$. |
-| **Divide y Vencerás** | Particionamiento Geográfico | División de una gran zona o volumen de entregas en subzonas de trabajo. | Reduce la complejidad de asignación asignando subgrupos a flotillas independientes. |
-| **Recursividad** | Análisis Acumulado de Rutas | Cálculo del tiempo, costo y distancia total acumulada al transitar una cadena de rutas. | Permite recorrer tramos encadenados de forma concisa y elegante. |
-| **Algoritmo de Ordenamiento** (ej. QuickSort/MergeSort) | Reportes Consolidados | Clasificación de listas de envíos o rutas por fecha, costo o prioridad. | Organización eficiente $O(n \log n)$ para la generación de reportes operativos. |
-| **Algoritmo de Búsqueda** (ej. Búsqueda Binaria) | Consultas Secundarias | Búsqueda sobre catálogos o arreglos ordenados por criterios secundarios. | Búsqueda logarítmica $O(\log n)$ cuando no se utiliza la clave primaria de la Hash Table. |
+Requisitos: **Java 21** y **Maven**.
 
----
+```bash
+make run        # compila y ejecuta desde el código fuente
+make test       # ejecuta la suite de pruebas
+make package    # genera el jar ejecutable
+make run-jar    # compila el jar y lo ejecuta
+make help       # lista todos los objetivos
+```
 
-## Historias de Usuario (BDD - Given / When / Then)
-
-### Historia 1: Procesar Despacho Urgente
-**Como** Coordinador de Operaciones  
-**Quiero** procesar de manera inmediata las entregas clasificadas como críticas  
-**Para** garantizar que los medicamentos u envíos prioritarios salgan primero.
-
-* **Escenario 1: Extracción exitosa del paquete más urgente**
-  * **GIVEN** que la Cola de Prioridad contiene paquetes con prioridades de 1 (Normal) a 5 (Urgencia Crítica),
-  * **WHEN** el usuario selecciona la opción "Despachar Siguiente Envió",
-  * **THEN** el sistema extrae e identifica el paquete de prioridad 5 (máxima) en tiempo $O(1)$ y actualiza su estado a `EN_TRANSITO`.
+La interfaz gráfica se abre en una ventana Swing con pestañas: **Resumen,
+Despacho, Rastreo, Red, Repartos, Centros** y **Reportes**.
 
 ---
 
-### Historia 2: Rastrear Paquete por Número de Guía
-**Como** Agente de Servicio al Cliente  
-**Quiero** consultar la información detallada de un paquete usando su código de guía  
-**Para** informarle la localización exacta al cliente en tiempo real.
+## Funcionalidades
 
-* **Escenario 1: Búsqueda exitosa en tiempo constante**
-  * **GIVEN** un sistema cargado con 50 o más paquetes registrados en el `HashMap`,
-  * **WHEN** el agente ingresa la guía `"MX-99823"`,
-  * **THEN** el sistema recupera inmediatamente en $O(1)$ la entidad `Paquete` mostrando su origen, destino, costo y estado sin iterar sobre los demás registros.
-
-* **Escenario 2: Guía no registrada**
-  * **GIVEN** la tabla Hash de paquetes,
-  * **WHEN** el agente busca la guía `"NON-EXISTENT"`,
-  * **THEN** el sistema notifica que la guía no existe sin provocar errores de ejecución ni retrasos.
+| Pestaña | Qué hace |
+| :--- | :--- |
+| **Resumen** | Métricas generales: totales de paquetes, rutas, ingresos y pesos. |
+| **Despacho** | Extrae el paquete más urgente y lo pasa a `EN_TRANSITO`. |
+| **Rastreo** | Consulta un paquete por su número de guía en tiempo constante. |
+| **Red** | Grafo de ciudades/rutas y camino más corto por tiempo, costo o distancia. |
+| **Repartos** | Divide un lote entre vehículos según capacidad (divide y vencerás). |
+| **Centros** | Jerarquía Nacional → Regional → Local y listado por nivel. |
+| **Reportes** | Listados ordenados por costo, fecha límite o prioridad. |
 
 ---
 
-### Historia 3: Visualizar Red de Rutas y Calcular Tiempos
-**Como** Planificador de Transportes  
-**Quiero** visualizar las conexiones de la red logística y calcular el tiempo acumulado de un trayecto  
-**Para** optimizar las salidas entre centros de distribución.
+## Módulos de negocio (`com.dev.modules`)
 
-* **Escenario 1: Travesía recursiva de rutas**
-  * **GIVEN** un Grafo cargado con al menos 10 nodos (ciudades/centros) y sus respectivas aristas (rutas con tiempos),
-  * **WHEN** se solicita calcular el costo/tiempo acumulado de la ruta `"Centro A -> Centro B -> Centro C"`,
-  * **THEN** la función recursiva realiza la suma de cada tramo y despliega el tiempo total exacto acumulado.
+Son funciones estáticas sin estado: reciben datos y devuelven listas o mapas
+nuevos, sin mutar la entrada.
+
+- **`Deliveries`** — paquetes y despacho:
+  `dispatchNext` (extrae el más urgente y lo pasa a `EN_TRANSITO`),
+  `urgent`, `indexByWaybill` / `findByWaybill` (rastreo `O(1)`),
+  `updateStatus`, `filterByStatus` / `filterByPriority`,
+  `sortByCost` / `sortByDeadline` / `sortByPriority`, y agregados
+  (`totalWeight`, `totalPriceInCents`, `countByPriority`).
+- **`Routing`** — rutas y flota:
+  `network` / `shortestPath` (grafo no ponderado),
+  `weightedNetwork` / `weightedShortestPath` (Dijkstra por tiempo, costo o
+  distancia), `sortByExpense` / `sortByDistance` / `sortByTime`,
+  `cumulativeTime` / `cumulativeCost` / `cumulativeDistance` (recursivos),
+  `partitionByState` y `partitionDeliveries` (divide y vencerás → `Assignment`).
+- **`Centers`** — jerarquía de centros:
+  `hierarchy` (árbol a partir de `parentId`), `nationalToLocal` (pre-orden) y
+  `byLevel` (agrupados por `CenterLevel`).
+- **`Analytics`** — métricas agregadas:
+  `totalExpense`, `averageExpense`, `mostExpensiveRoute`, `cheapestRoute`,
+  `totalDistance`, `revenueInCents`, `averagePriceInCents`,
+  `heaviestPackage`, `countByStatus` y `revenueByRoute`.
 
 ---
 
-### Historia 4: Asignación de Entregas por Zonas (Divide y Vencerás)
-**Como** Supervisor de Logística  
-**Quiero** subdividir un lote masivo de entregas en sectores geográficos más pequeños  
-**Para** asignar flotillas de manera eficiente.
+## Estructuras y algoritmos propios (`com.dev.ds`)
 
-* **Escenario 1: Partición geográfica de entregas**
-  * **GIVEN** un conjunto amplio de paquetes asignados a una región metropolitana,
-  * **WHEN** se ejecuta la función de particionamiento geográfico,
-  * **THEN** el algoritmo Divide y Vencerás segmenta la lista en cuadrantes independientes y distribuye equilibradamente la carga entre los vehículos disponibles.
+| Clase | Uso |
+| :--- | :--- |
+| `PriorityQueue` / `BucketQueue` | Despacho por urgencia, incluso en `O(1)`. |
+| `HashMap` | Índice guía → paquete, búsqueda promedio `O(1)`. |
+| `WeightedGraph` | Red de rutas; Dijkstra para el camino de menor peso. |
+| `Graph` | Red no ponderada; camino con menos paradas (BFS). |
+| `Tree` / `BinaryTree` | Jerarquía de centros y organización de la flotilla. |
+| `Sorting` | MergeSort (estable) y QuickSort. |
+| `Search` | Búsqueda binaria sobre arreglos ordenados. |
+| `Queue` / `Stack` | Recorridos auxiliares. |
+
+Los cálculos acumulados de **tiempo, costo y distancia** sobre cadenas de rutas
+usan **recursividad**, y el particionamiento de entregas usa **divide y
+vencerás**.
 
 ---
 
-### Historia 5: Generar Reportes Ordenados
-**Como** Director de Logística  
-**Quiero** emitir reportes ordenados por costo de envío o fecha límite  
-**Para** analizar la rentabilidad y prioridades operativas.
+## Arquitectura
 
-* **Escenario 1: Generación de reporte ordenado por costo**
-  * **GIVEN** la lista completa de paquetes en memoria,
-  * **WHEN** se solicita el reporte de "Paquetes ordenados por Costo de Transporte",
-  * **THEN** el sistema aplica el algoritmo de ordenamiento explícito (QuickSort/MergeSort) y muestra la lista tabulada desde el menor al mayor costo.
+```
+src/main/java/com/dev/
+├── lola/      App: punto de entrada (Swing)
+├── ui/        Paneles, ventana principal y Store (datos en memoria)
+├── modules/   Lógica de negocio: Deliveries, Routing, Centers, Analytics
+├── ds/        Estructuras de datos y algoritmos propios
+├── domain/    Modelos inmutables (Package, Route, Zone, Vehicle, Center…)
+└── data/      Seed: datos deterministas de ejemplo
+```
+
+- **`Store`** mantiene los datos en memoria como listas inmutables.
+- Los **módulos** son funciones estáticas sin estado que devuelven datos nuevos;
+  nunca mutan la entrada.
+- **`Seed`** genera datos reproducibles (semilla fija 42): 12 zonas, 14 rutas,
+  12 centros, 6 vehículos y 60 paquetes.
+
+---
+
+## Pruebas
+
+Las pruebas unitarias (JUnit 5) cubren `ds`, `modules`, `data`, `ui` y `lola`.
+Ejecútalas con:
+
+```bash
+make test
+```

@@ -20,7 +20,7 @@ public final class Analytics {
   }
 
   // ---------------------------------------------------------------------------
-  // Routes
+  // Rutas: costo, distancia y extremos.
   // ---------------------------------------------------------------------------
 
   /** Sums the expense of every route, in cents. */
@@ -91,7 +91,7 @@ public final class Analytics {
   }
 
   // ---------------------------------------------------------------------------
-  // Packages
+  // Paquetes: ingresos, promedios y conteos.
   // ---------------------------------------------------------------------------
 
   /** Sums the price of every package, in cents. */

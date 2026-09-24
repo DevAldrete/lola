@@ -1,4 +1,4 @@
-package com.dev.lola;
+package com.dev.pkglog;
 
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;

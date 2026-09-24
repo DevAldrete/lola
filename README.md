@@ -1,4 +1,4 @@
-# LOLA — Sistema de Gestión de Logística y Envíos
+# PkgLog — Sistema de Gestión de Logística y Envíos
 
 Aplicación de escritorio para gestionar operaciones logísticas: despacho por
 urgencia, rastreo de paquetes, red de rutas, asignación de repartos, jerarquía
@@ -92,7 +92,7 @@ vencerás**.
 
 ```
 src/main/java/com/dev/
-├── lola/      App: punto de entrada (Swing)
+├── pkglog/      App: punto de entrada (Swing)
 ├── ui/        Paneles, ventana principal y Store (datos en memoria)
 ├── modules/   Lógica de negocio: Deliveries, Routing, Centers, Analytics
 ├── ds/        Estructuras de datos y algoritmos propios
@@ -110,7 +110,7 @@ src/main/java/com/dev/
 
 ## Pruebas
 
-Las pruebas unitarias (JUnit 5) cubren `ds`, `modules`, `data`, `ui` y `lola`.
+Las pruebas unitarias (JUnit 5) cubren `ds`, `modules`, `data`, `ui` y `pkglog`.
 Ejecútalas con:
 
 ```bash

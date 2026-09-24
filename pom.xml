@@ -4,15 +4,15 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.dev</groupId>
-  <artifactId>lola</artifactId>
+  <artifactId>pkglog</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
-  <name>lola</name>
+  <name>pkglog</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
-    <exec.mainClass>com.dev.lola.App</exec.mainClass>
+    <exec.mainClass>com.dev.pkglog.App</exec.mainClass>
   </properties>
 
   <dependencyManagement>
@@ -85,7 +85,7 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <!-- Produce an executable jar: `java -jar target/lola-<version>.jar` -->
+      <!-- Produce an executable jar: `java -jar target/pkglog-<version>.jar` -->
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>

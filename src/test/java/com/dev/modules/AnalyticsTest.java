@@ -1,7 +1,7 @@
 package com.dev.modules;
 
-import static com.dev.lola.Fixtures.pkg;
-import static com.dev.lola.Fixtures.route;
+import static com.dev.pkglog.Fixtures.pkg;
+import static com.dev.pkglog.Fixtures.route;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

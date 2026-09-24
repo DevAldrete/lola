@@ -16,7 +16,7 @@ public final class MainFrame extends JFrame {
   private static final long serialVersionUID = 1L;
 
   public MainFrame(Store store) {
-    super("LOLA - Sistema de Gestión Logística");
+    super("PkgLog - Sistema de Gestión Logística");
 
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setJMenuBar(buildMenuBar());

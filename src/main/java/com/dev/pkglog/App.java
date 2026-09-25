@@ -1,8 +1,14 @@
 package com.dev.pkglog;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import com.dev.db.Database;
+import com.dev.db.Repositories;
 import com.dev.ui.MainFrame;
 import com.dev.ui.Store;
 
@@ -11,7 +17,22 @@ public class App {
   public static void main(String[] args) {
     SwingUtilities.invokeLater(() -> {
       useSystemLookAndFeel();
-      new MainFrame(new Store()).setVisible(true);
+
+      Database database = Database.openDefault();
+      Repositories repositories = Repositories.jdbc(database);
+      Store store = new Store(repositories);
+
+      MainFrame frame = new MainFrame(store);
+      frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      frame.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosing(WindowEvent event) {
+          database.close();
+          frame.dispose();
+          System.exit(0);
+        }
+      });
+      frame.setVisible(true);
     });
   }
 

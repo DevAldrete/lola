@@ -127,7 +127,7 @@ public final class DispatchPanel extends JPanel implements Refreshable {
       return;
     }
 
-    store.setPackages(dispatch.packages());
+    store.applyDispatch(dispatch);
     refresh();
 
     Package pkg = dispatch.dispatched();

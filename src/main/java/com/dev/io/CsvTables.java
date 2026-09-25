@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.dev.domain.CenterLevel;
 import com.dev.domain.DeliveryStatus;
 import com.dev.domain.DistributionCenter;
 import com.dev.domain.Package;
@@ -122,10 +121,5 @@ public final class CsvTables {
     }
 
     return csv.toString();
-  }
-
-  /** Exposed for callers that validate level names from imported data. */
-  public static CenterLevel centerLevel(String value) {
-    return CenterLevel.valueOf(value);
   }
 }

@@ -101,7 +101,7 @@ public final class FormDialog {
       return LocalDateTime.parse(require(key), DATE_TIME);
     }
 
-    private String require(String key, String... ignored) {
+    private String require(String key) {
       String value = map.get(key);
       if (value == null || value.isBlank()) {
         throw new IllegalArgumentException("El campo " + key + " es obligatorio");

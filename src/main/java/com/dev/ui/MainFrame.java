@@ -32,6 +32,7 @@ public final class MainFrame extends JFrame {
     tabs.addTab("Repartos", new PartitionPanel(store));
     tabs.addTab("Centros", new CentersPanel(store));
     tabs.addTab("Reportes", new ReportsPanel(store));
+    tabs.addTab("Datos", new AdminPanel(store));
     tabs.addTab("Auditoría", new AuditPanel(store));
 
     tabs.addChangeListener(event -> {

@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,9 @@ import org.junit.jupiter.api.Test;
 import com.dev.db.Database;
 import com.dev.db.Repositories;
 import com.dev.domain.DistributionCenter;
+import com.dev.domain.Role;
+import com.dev.domain.User;
+import com.dev.domain.Zone;
 import com.dev.domain.Package;
 import com.dev.domain.Route;
 import com.dev.domain.Vehicle;
@@ -100,6 +105,29 @@ class StoreTest {
         .filter(pkg -> pkg.idGuia().equals(first.idGuia())).findFirst().orElseThrow();
 
     assertEquals(com.dev.domain.DeliveryStatus.DELIVERED, reloaded.status());
+  }
+
+  @Test
+  void masterDataCrudRoundTripsThroughTheDatabase() {
+    Zone zone = new Zone(store.nextZoneId(), "AM", "Manaus");
+    store.saveZone(zone);
+    assertTrue(store.zones().contains(zone));
+
+    Route route = new Route(store.nextRouteId(), zone.id(), 1, 1_000d, Duration.ofMinutes(15),
+        2_500L);
+    store.saveRoute(route);
+    assertTrue(store.routes().contains(route));
+
+    User user = new User(store.nextUserId(), "Tester", "tester", "hash", Role.USER);
+    store.saveUser(user);
+    assertTrue(store.findUserByEmail("tester").isPresent());
+
+    assertTrue(store.deleteRoute(route.id()));
+    assertFalse(store.routes().contains(route));
+    assertTrue(store.deleteZone(zone.id()));
+    assertFalse(store.zones().contains(zone));
+    assertTrue(store.deleteUser(user.id()));
+    assertTrue(store.findUserByEmail("tester").isEmpty());
   }
 
   @Test

@@ -126,6 +126,32 @@ public final class Store {
     reload();
   }
 
+  /** Bulk import; skips waybills that already exist. Returns how many were added. */
+  public int importPackages(List<Package> incoming) {
+    int imported = 0;
+    int nextId = repositories.packages().nextId();
+
+    for (Package pkg : incoming) {
+      if (repositories.packages().findByWaybill(pkg.idGuia()).isPresent()) {
+        continue;
+      }
+
+      int id = pkg.id() > 0 && repositories.packages().findById(pkg.id()).isEmpty()
+          ? pkg.id()
+          : nextId;
+
+      repositories.packages().save(new Package(id, pkg.idGuia(), pkg.routeId(), pkg.weight(),
+          pkg.priceInCents(), pkg.deadline(), pkg.priority(), pkg.status()));
+      imported++;
+      nextId = Math.max(nextId, id + 1);
+    }
+
+    audit("IMPORT", "Package", "bulk", "importó " + imported + " paquetes");
+    reload();
+
+    return imported;
+  }
+
   public boolean deletePackage(int id) {
     boolean removed = repositories.packages().deleteById(id);
     if (removed) {

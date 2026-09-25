@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +14,9 @@ import org.junit.jupiter.api.Test;
 
 import com.dev.db.Database;
 import com.dev.db.Repositories;
+import com.dev.domain.DeliveryStatus;
 import com.dev.domain.DistributionCenter;
+import com.dev.domain.Priority;
 import com.dev.domain.Role;
 import com.dev.domain.User;
 import com.dev.domain.Zone;
@@ -137,6 +141,19 @@ class StoreTest {
     assertTrue(Passwords.verify("admin123", admin.password()));
     assertFalse(Passwords.verify("wrong", admin.password()));
     assertFalse(admin.password().contains("admin123"));
+  }
+
+  @Test
+  void importSkipsExistingWaybillsAndAssignsIds() {
+    Package existing = store.packages().get(0);
+    Package fresh = new Package(0, "WB-IMPORT-1", existing.routeId(), 2f, 1_000L,
+        LocalDateTime.now().plusDays(1), Priority.NORMAL, DeliveryStatus.CREATED);
+
+    int imported = store.importPackages(List.of(existing, fresh));
+
+    assertEquals(1, imported);
+    assertTrue(store.packages().stream().anyMatch(pkg -> pkg.idGuia().equals("WB-IMPORT-1")));
+    assertTrue(store.auditEvents(5).stream().anyMatch(event -> "IMPORT".equals(event.action())));
   }
 
   @Test

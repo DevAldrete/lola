@@ -15,6 +15,7 @@ import com.dev.domain.Package;
 import com.dev.domain.Route;
 import com.dev.domain.Vehicle;
 import com.dev.modules.Centers;
+import com.dev.security.Passwords;
 
 class StoreTest {
 
@@ -99,6 +100,15 @@ class StoreTest {
         .filter(pkg -> pkg.idGuia().equals(first.idGuia())).findFirst().orElseThrow();
 
     assertEquals(com.dev.domain.DeliveryStatus.DELIVERED, reloaded.status());
+  }
+
+  @Test
+  void seededAccountsAuthenticateWithHashedPasswords() {
+    var admin = store.findUserByEmail("admin").orElseThrow();
+
+    assertTrue(Passwords.verify("admin123", admin.password()));
+    assertFalse(Passwords.verify("wrong", admin.password()));
+    assertFalse(admin.password().contains("admin123"));
   }
 
   @Test

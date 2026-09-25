@@ -173,6 +173,35 @@ class DeliveriesTest {
   }
 
   @Test
+  void dispatchNextPrefersEarlierDeadlineWithinSamePriority() {
+    LocalDateTime base = LocalDateTime.of(2026, 1, 10, 12, 0);
+
+    List<Package> packages = List.of(
+        pkg(1, "WB-LATE", 1, 1f, 100, base.plusDays(5), Priority.URGENT, DeliveryStatus.CREATED),
+        pkg(2, "WB-EARLY", 1, 1f, 100, base.plusDays(1), Priority.URGENT, DeliveryStatus.CREATED));
+
+    Deliveries.Dispatch dispatch = Deliveries.dispatchNext(packages).orElseThrow();
+
+    assertEquals("WB-EARLY", dispatch.dispatched().idGuia());
+  }
+
+  @Test
+  void overdueReturnsOnlyActiveLatePackages() {
+    LocalDateTime now = LocalDateTime.of(2026, 1, 10, 12, 0);
+
+    List<Package> packages = List.of(
+        pkg(1, "WB-OVER", 1, 1f, 100, now.minusDays(1), Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(2, "WB-FUTURE", 1, 1f, 100, now.plusDays(1), Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(3, "WB-DONE", 1, 1f, 100, now.minusDays(2), Priority.NORMAL, DeliveryStatus.DELIVERED));
+
+    List<Package> overdue = Deliveries.overdue(packages, now);
+
+    assertEquals(1, overdue.size());
+    assertEquals("WB-OVER", overdue.get(0).idGuia());
+    assertEquals(1, Deliveries.overdueCount(packages, now));
+  }
+
+  @Test
   void sortsPackagesByCostAndDeadline() {
     LocalDateTime base = LocalDateTime.of(2026, 3, 1, 8, 0);
 

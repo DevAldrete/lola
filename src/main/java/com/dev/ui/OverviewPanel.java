@@ -3,6 +3,7 @@ package com.dev.ui;
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.time.LocalDateTime;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -25,6 +26,7 @@ public final class OverviewPanel extends JPanel implements Refreshable {
   private final JLabel delivered = new JLabel();
   private final JLabel inTransit = new JLabel();
   private final JLabel canceled = new JLabel();
+  private final JLabel overdue = new JLabel();
   private final JLabel revenue = new JLabel();
   private final JLabel routes = new JLabel();
   private final JLabel distance = new JLabel();
@@ -45,6 +47,7 @@ public final class OverviewPanel extends JPanel implements Refreshable {
     add(card("Entregados", delivered));
     add(card("En tránsito", inTransit));
     add(card("Cancelados", canceled));
+    add(card("Vencidos", overdue));
     add(card("Ingresos (sin cancelados)", revenue));
     add(card("Rutas", routes));
     add(card("Distancia de red", distance));
@@ -75,6 +78,7 @@ public final class OverviewPanel extends JPanel implements Refreshable {
     delivered.setText(count(DeliveryStatus.DELIVERED));
     inTransit.setText(count(DeliveryStatus.IN_TRANSIT));
     canceled.setText(count(DeliveryStatus.CANCELED));
+    overdue.setText(String.valueOf(Deliveries.overdueCount(store.packages(), LocalDateTime.now())));
     revenue.setText(Format.money(Analytics.revenueInCents(store.packages())));
     routes.setText(String.valueOf(store.routes().size()));
     distance.setText(Format.distance(Analytics.totalDistance(store.routes())));

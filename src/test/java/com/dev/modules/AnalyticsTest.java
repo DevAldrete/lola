@@ -75,6 +75,17 @@ class AnalyticsTest {
   }
 
   @Test
+  void revenueAndWeightExcludeCanceledPackages() {
+    List<Package> packages = List.of(
+        pkg(1, "WB-1", 10, 2f, 500, Priority.NORMAL, DeliveryStatus.CREATED),
+        pkg(2, "WB-2", 10, 3f, 700, Priority.NORMAL, DeliveryStatus.CANCELED));
+
+    assertEquals(500L, Analytics.revenueInCents(packages));
+    assertEquals(2f, Analytics.totalWeight(packages), 0.0001f);
+    assertTrue(Analytics.revenueByRoute(packages).get(10) == 500L);
+  }
+
+  @Test
   void averagePriceIsEmptyWithoutPackages() {
     assertTrue(Analytics.averagePriceInCents(List.of()).isEmpty());
   }
